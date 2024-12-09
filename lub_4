@@ -135,7 +135,8 @@ int Menu1()
 		Arrow(1, position); printf("Загрузить данные из файла\n");
 		Arrow(2, position); printf("Работа с данными\n");
 		Arrow(3, position); printf("Сохранить данные в файл\n");
-		Arrow(4, position); printf("Выход\n\n");
+		Arrow(4, position); printf("Сохранить данные с указанной категорией\n");
+		Arrow(5, position); printf("Выход\n\n");
 		KeyPres = GetKey();
 		system("cls");
 		if (KeyPres == 72 && position != 1)
@@ -160,14 +161,13 @@ int Menu2()
 		Arrow(3, position); printf("Добавить запись\n");
 		Arrow(4, position); printf("Удалить запись\n");
 		Arrow(5, position); printf("Изменить запись\n");
-		Arrow(6, position); printf("Сортировать записи \n");
-		Arrow(7, position); printf("Назад\n");
+		Arrow(6, position); printf("Назад\n");
 
 		KeyPres = GetKey();
 		system("cls");
 		if (KeyPres == 72 && position != 1)
 			position--;
-		if (KeyPres == 80 && position != 7)
+		if (KeyPres == 80 && position != 6)
 		{
 			position++;
 		}
@@ -203,37 +203,15 @@ int Menu3()
 	return position;
 }
 
-//сортировка
-
-//среднее значение
-
-int average_value(toys_table*& massiv, int end) // end - кол-во строк
-{
-	long average = 0;
-	long summ = 0;
-	for (int k = 0; k < end; k++)
-	{
-		long l = strtol(massiv[k].toys_cost, NULL, 10);
-		summ = summ + l;
-	}
-	average = summ / end;
-	printf("%d", average);
-	return average;
-}
-
-
-
-
-
-
-void sortByCategory(toys_table*& massiv, int end)
+//сортировка по имени
+void SortByName(toys_table*&massiv, int end)
 {
 	toys_table temp;
 	for (int k = 0; k < end - 1; k++)
 	{
 		for (int j = k + 1; j < end; j++)
 		{
-			int cmp = strcmp(massiv[k].toys_category, massiv[j].toys_category);
+			int cmp = strcmp(massiv[k].toys_name, massiv[j].toys_name);
 
 			if (cmp > 0)
 			{
@@ -244,6 +222,47 @@ void sortByCategory(toys_table*& massiv, int end)
 		}
 	}
 }
+
+
+//среднее значение
+int average_value(toys_table*& massiv, int end) // end - кол-во строк
+{
+	int average = 0;
+	long summ = 0;
+	for (int k = 0; k < end; k++)
+	{
+		long l = strtol(massiv[k].toys_cost, NULL, 10);
+		summ = summ + l;
+	}
+	average = summ / end;
+	
+	return average;
+}
+
+//фильтр по категории
+void FilterByCategory(int& line, char* category, toys_table*& massiv)
+{
+	for (int i = 0; i < line; i++)
+	{
+		if (strcmp(massiv[i].toys_category, category) != 0)
+		{
+			delete_data(i, line, massiv);
+		}
+	}
+}
+//фильтр по среднему значению
+void FilterByAverage(int &line, int average, toys_table *& massiv)
+{
+	for (int k = 0; k < line; k++)
+	{
+		if (strtol(massiv[k].toys_cost, NULL, 10) <= average)
+		{
+			delete_data(k, line, massiv);
+		}
+	}
+}
+
+
 
 //просмотр записей
 int cheсk_massiv(int number, toys_table* massiv, int line)
@@ -313,6 +332,24 @@ void PrintAllData(toys_table*& massiv, int& line)
 }
 
 
+void SaveRes(int line, char* category, toys_table*& massiv, FILE* output)
+{
+	FilterByCategory(line, category, massiv);
+	int b = average_value(massiv, line);
+	FilterByAverage(line, b, massiv);
+	SortByName(massiv, line);
+	SaveFile1(line, output, massiv);
+
+
+}
+
+
+
+
+
+
+
+
 
 int main()
 {
@@ -323,6 +360,7 @@ int main()
 	SetConsoleCP(1251);
 	int line = 0, number = 0;
 	toys_table* massiv = {};
+	char category[100];
 	memory(&massiv, 0);
 	int choice2 = 1, choice3 = 1;
 	char user_path[1000];
@@ -342,6 +380,7 @@ int main()
 				LoadData(input, massiv, line);
 				fclose(input);
 			}
+			system("cls");
 			break;
 		}
 		case 2:
@@ -389,6 +428,7 @@ int main()
 							printf("Текущее название: %s \n", massiv[number].toys_name);
 							printf("Введите новое название: ");
 							scanf("%s", massiv[number].toys_name);
+							system("cls");
 							break;
 						}
 						case 2:
@@ -396,6 +436,7 @@ int main()
 							printf("Текущая цена: %s \n", massiv[number].toys_cost);
 							printf("Введите новую цену: ");
 							scanf("%s", massiv[number].toys_cost);
+							system("cls");
 							break;
 						}
 						case 3:
@@ -403,12 +444,14 @@ int main()
 							printf("Текущая категория: %s \n", massiv[number].toys_category);
 							printf("Введите новую категорию: ");
 							scanf("%s", massiv[number].toys_category);
+							system("cls");
 							break;
 						}
 						case 4:
 						{
 							printf("Введите данные в виде: Название игрушки, цена игрушки, возрастная категория\n");
 							scanf("%s %s %s", massiv[number].toys_name, massiv[number].toys_cost, massiv[number].toys_category);
+							system("cls");
 							break;
 						}
 						case 6:
@@ -426,18 +469,6 @@ int main()
 					break;
 				}
 				case 6:
-				{
-					if (line != 0)
-					{
-						average_value(massiv, line);
-						sortByCategory(massiv, line);
-						number = 0;
-					}
-					else
-						printf("Добавьте или считайте запись\n");
-					break;
-				}
-				case 7:
 				{
 					choice1 = 0;
 					choice2 = 0;
@@ -459,7 +490,21 @@ int main()
 			}
 			break;
 		}
+
 		case 4:
+		{
+			FILE* output = fopen("C:\\Users\\mrtim\\Desktop\\res.txt", "w");
+			if (Check(output))
+			{
+				printf("Введите необходимую категорию(0+; 6+; 12+; 16+; 18+)");
+				scanf("%s", &category);
+				SaveRes(line, category, massiv, output);
+				fclose(output);
+			}
+			break;
+		}
+
+		case 5:
 		{
 			free(massiv);
 			printf("Программа была завершена!\n");
